@@ -24,3 +24,13 @@ sqlparse==0.4.1
 stripe==2.60.0
 toml==0.10.2
 urllib3==1.26.6
+
+
+Django>=4.0
+gunicorn
+dj-database-url
+psycopg2-binary
+whitenoise
+django-cors-headers
+stripe
+python-dotenv
