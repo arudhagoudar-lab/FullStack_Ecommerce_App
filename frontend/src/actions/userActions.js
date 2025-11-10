@@ -54,474 +54,354 @@ import {
 
 import axios from 'axios'
 
+// Base API URL — will use deployed backend when built on Render
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8000";
+
 // Login
 export const login = (username, password) => async (dispatch) => {
     try {
-        dispatch({
-            type: USER_LOGIN_REQUEST
-        })
+        dispatch({ type: USER_LOGIN_REQUEST });
 
         const config = {
             headers: {
                 'Content-type': 'application/json'
             }
-        }
+        };
 
         const { data } = await axios.post(
-            '/account/login/',
-            { 'username': username, 'password': password },
+            `${API_BASE}/account/login/`,
+            { username, password },
             config
-        )
+        );
 
         dispatch({
             type: USER_LOGIN_SUCCESS,
             payload: data
-        })
+        });
 
-        localStorage.setItem('userInfo', JSON.stringify(data)) // will create a new key-value pair in localStorage
-        // also see store.js file
-
+        localStorage.setItem('userInfo', JSON.stringify(data));
     } catch (error) {
         dispatch({
             type: USER_LOGIN_FAIL,
             payload: error.response && error.response.data.detail ? error.response.data.detail : error.message
-        })
+        });
     }
-}
+};
 
 // Logout
 export const logout = () => (dispatch) => {
-    localStorage.removeItem('userInfo')
-    dispatch({
-        type: USER_LOGOUT
-    })
-    dispatch({
-        type: CARD_CREATE_RESET
-    })
-}
+    localStorage.removeItem('userInfo');
+    dispatch({ type: USER_LOGOUT });
+    dispatch({ type: CARD_CREATE_RESET });
+};
 
-// register
+// Register
 export const register = (username, email, password) => async (dispatch) => {
     try {
-        dispatch({ type: USER_REGISTER_REQUEST })
+        dispatch({ type: USER_REGISTER_REQUEST });
 
         const config = {
             headers: {
                 'Content-type': 'application/json'
             }
-        }
+        };
 
-        const { data } = await axios.post(`/account/register/`,
-            { 'username': username, 'email': email, 'password': password },
+        const { data } = await axios.post(
+            `${API_BASE}/account/register/`,
+            { username, email, password },
             config
-        )
+        );
 
-        dispatch({
-            type: USER_REGISTER_SUCCESS,
-            payload: data
-        })
+        dispatch({ type: USER_REGISTER_SUCCESS, payload: data });
+        dispatch({ type: USER_LOGIN_SUCCESS, payload: data });
 
-        dispatch({
-            type: USER_LOGIN_SUCCESS,
-            payload: data
-        })
-
-        localStorage.setItem('userInfo', JSON.stringify(data))
-    }
-    catch (error) {
+        localStorage.setItem('userInfo', JSON.stringify(data));
+    } catch (error) {
         dispatch({
             type: USER_REGISTER_FAIL,
             payload: error.response && error.response.data.detail ? error.response.data.detail : error.message
-        })
+        });
     }
-}
+};
 
-// check token validation
+// Check token validation
 export const checkTokenValidation = () => async (dispatch, getState) => {
     try {
-
-        dispatch({
-            type: CHECK_TOKEN_VALID_REQUEST
-        })
+        dispatch({ type: CHECK_TOKEN_VALID_REQUEST });
 
         const {
             userLoginReducer: { userInfo }
-        } = getState()
+        } = getState();
 
         const config = {
             headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${userInfo.token}`
             }
-        }
+        };
 
-        // call api
-        const { data } = await axios.get("/payments/check-token/", config)
+        const { data } = await axios.get(`${API_BASE}/payments/check-token/`, config);
 
-        dispatch({
-            type: CHECK_TOKEN_VALID_SUCCESS,
-            payload: data
-        })
-
+        dispatch({ type: CHECK_TOKEN_VALID_SUCCESS, payload: data });
     } catch (error) {
         dispatch({
             type: CHECK_TOKEN_VALID_FAIL,
             payload: error.response && error.response.data.details ? error.response.data.details : error.message
-        })
+        });
     }
-}
+};
 
-
-
-// user details
+// User details
 export const userDetails = (id) => async (dispatch, getState) => {
-
     try {
-
-        dispatch({
-            type: USER_DETAILS_REQUEST
-        })
+        dispatch({ type: USER_DETAILS_REQUEST });
 
         const {
             userLoginReducer: { userInfo }
-        } = getState()
+        } = getState();
 
         const config = {
             headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${userInfo.token}`
             }
-        }
+        };
 
-        // call api
-        const { data } = await axios.get(`/account/user/${id}`, config)
+        const { data } = await axios.get(`${API_BASE}/account/user/${id}`, config);
 
-        dispatch({
-            type: USER_DETAILS_SUCCESS,
-            payload: data
-        })
-
+        dispatch({ type: USER_DETAILS_SUCCESS, payload: data });
     } catch (error) {
         dispatch({
             type: USER_DETAILS_FAIL,
             payload: error.response && error.response.data.details ? error.response.data.details : error.message
-        })
+        });
     }
-}
+};
 
-// user update details
+// Update user details
 export const userUpdateDetails = (userData) => async (dispatch, getState) => {
-
     try {
-
-        dispatch({
-            type: UPDATE_USER_DETAILS_REQUEST
-        })
+        dispatch({ type: UPDATE_USER_DETAILS_REQUEST });
 
         const {
             userLoginReducer: { userInfo }
-        } = getState()
+        } = getState();
 
         const config = {
             headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${userInfo.token}`
             }
-        }
+        };
 
-        // call api
         const { data } = await axios.put(
-            `/account/user_update/${userInfo.id}/`,
+            `${API_BASE}/account/user_update/${userInfo.id}/`,
             {
-                "username": userData.username,
-                "email": userData.email,
-                "password": userData.password
+                username: userData.username,
+                email: userData.email,
+                password: userData.password
             },
             config
-        )
+        );
 
-        dispatch({
-            type: UPDATE_USER_DETAILS_SUCCESS,
-            payload: data
-        })
-
+        dispatch({ type: UPDATE_USER_DETAILS_SUCCESS, payload: data });
     } catch (error) {
         dispatch({
             type: UPDATE_USER_DETAILS_FAIL,
             payload: error.response && error.response.data.details ? error.response.data.details : error.message
-        })
+        });
     }
-}
+};
 
-
-// user account delete
+// Delete user account
 export const userAccountDelete = (userData) => async (dispatch, getState) => {
-
     try {
-
-        dispatch({
-            type: DELETE_USER_ACCOUNT_REQUEST
-        })
+        dispatch({ type: DELETE_USER_ACCOUNT_REQUEST });
 
         const {
             userLoginReducer: { userInfo }
-        } = getState()
+        } = getState();
 
         const config = {
             headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${userInfo.token}`
             }
-        }
+        };
 
-        // call api
         const { data } = await axios.post(
-            `/account/user_delete/${userData.id}/`,
-            {
-                "password": userData.password
-            },
+            `${API_BASE}/account/user_delete/${userData.id}/`,
+            { password: userData.password },
             config
-        )
+        );
 
-        dispatch({
-            type: DELETE_USER_ACCOUNT_SUCCESS,
-            payload: data
-        })
-
+        dispatch({ type: DELETE_USER_ACCOUNT_SUCCESS, payload: data });
     } catch (error) {
         dispatch({
             type: DELETE_USER_ACCOUNT_FAIL,
             payload: error.response && error.response.data.details ? error.response.data.details : error.message
-        })
+        });
     }
-}
+};
 
-
-// get user address
+// Get all addresses
 export const getAllAddress = () => async (dispatch, getState) => {
     try {
-        dispatch({
-            type: GET_USER_ALL_ADDRESSES_REQUEST
-        })
+        dispatch({ type: GET_USER_ALL_ADDRESSES_REQUEST });
 
         const {
             userLoginReducer: { userInfo }
-        } = getState()
+        } = getState();
 
         const config = {
             headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${userInfo.token}`
             }
-        }
+        };
 
-        // call api
-        const { data } = await axios.get(
-            "/account/all-address-details/",
-            config
-        )
+        const { data } = await axios.get(`${API_BASE}/account/all-address-details/`, config);
 
-        dispatch({
-            type: GET_USER_ALL_ADDRESSES_SUCCESS,
-            payload: data
-        })
-
+        dispatch({ type: GET_USER_ALL_ADDRESSES_SUCCESS, payload: data });
     } catch (error) {
         dispatch({
             type: GET_USER_ALL_ADDRESSES_FAIL,
             payload: error.response && error.response.data.details ? error.response.data.details : error.message
-        })
+        });
     }
-}
+};
 
-
-// get user single address
+// Get single address
 export const getSingleAddress = (id) => async (dispatch, getState) => {
     try {
-        dispatch({
-            type: GET_SINGLE_ADDRESS_REQUEST
-        })
+        dispatch({ type: GET_SINGLE_ADDRESS_REQUEST });
 
         const {
             userLoginReducer: { userInfo }
-        } = getState()
+        } = getState();
 
         const config = {
             headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${userInfo.token}`
             }
-        }
+        };
 
-        // call api
-        const { data } = await axios.get(
-            `/account/address-details/${id}/`,
-            config
-        )
+        const { data } = await axios.get(`${API_BASE}/account/address-details/${id}/`, config);
 
-        dispatch({
-            type: GET_SINGLE_ADDRESS_SUCCESS,
-            payload: data
-        })
-
+        dispatch({ type: GET_SINGLE_ADDRESS_SUCCESS, payload: data });
     } catch (error) {
         dispatch({
             type: GET_SINGLE_ADDRESS_FAIL,
             payload: error.response && error.response.data.details ? error.response.data.details : error.message
-        })
+        });
     }
-}
+};
 
-
-// create user address
+// Create user address
 export const createUserAddress = (addressData) => async (dispatch, getState) => {
-
     try {
-        dispatch({
-            type: CREATE_USER_ADDRESS_REQUEST
-        })
+        dispatch({ type: CREATE_USER_ADDRESS_REQUEST });
 
         const {
             userLoginReducer: { userInfo }
-        } = getState()
+        } = getState();
 
         const config = {
             headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${userInfo.token}`
             }
-        }
+        };
 
-        // call api
-        const { data } = await axios.post(
-            "/account/create-address/",
-            addressData,
-            config
-        )
+        const { data } = await axios.post(`${API_BASE}/account/create-address/`, addressData, config);
 
-        dispatch({
-            type: CREATE_USER_ADDRESS_SUCCESS,
-            payload: data
-        })
-
+        dispatch({ type: CREATE_USER_ADDRESS_SUCCESS, payload: data });
     } catch (error) {
         dispatch({
             type: CREATE_USER_ADDRESS_FAIL,
             payload: error.response && error.response.data.details ? error.response.data.details : error.message
-        })
+        });
     }
-}
+};
 
-
-// update user address
+// Update user address
 export const updateUserAddress = (id, addressData) => async (dispatch, getState) => {
     try {
-        dispatch({
-            type: UPDATE_USER_ADDRESS_REQUEST
-        })
+        dispatch({ type: UPDATE_USER_ADDRESS_REQUEST });
 
         const {
             userLoginReducer: { userInfo }
-        } = getState()
+        } = getState();
 
         const config = {
             headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${userInfo.token}`
             }
-        }
+        };
 
-        // call api
-        const { data } = await axios.put(
-            `/account/update-address/${id}/`,
-            addressData,
-            config
-        )
+        const { data } = await axios.put(`${API_BASE}/account/update-address/${id}/`, addressData, config);
 
-        dispatch({
-            type: UPDATE_USER_ADDRESS_SUCCESS,
-            payload: data
-        })
-
+        dispatch({ type: UPDATE_USER_ADDRESS_SUCCESS, payload: data });
     } catch (error) {
         dispatch({
             type: UPDATE_USER_ADDRESS_FAIL,
             payload: error.response && error.response.data.details ? error.response.data.details : error.message
-        })
+        });
     }
-}
+};
 
-
-// delete user address
+// Delete user address
 export const deleteUserAddress = (id) => async (dispatch, getState) => {
     try {
-        dispatch({
-            type: DELETE_USER_ADDRESS_REQUEST
-        })
+        dispatch({ type: DELETE_USER_ADDRESS_REQUEST });
 
         const {
             userLoginReducer: { userInfo }
-        } = getState()
+        } = getState();
 
         const config = {
             headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${userInfo.token}`
             }
-        }
+        };
 
-        // call api
-        const { data } = await axios.delete(
-            `/account/delete-address/${id}/`,
-            config
-        )
+        const { data } = await axios.delete(`${API_BASE}/account/delete-address/${id}/`, config);
 
-        dispatch({
-            type: DELETE_USER_ADDRESS_SUCCESS,
-            payload: data
-        })
-
+        dispatch({ type: DELETE_USER_ADDRESS_SUCCESS, payload: data });
     } catch (error) {
         dispatch({
             type: DELETE_USER_ADDRESS_FAIL,
             payload: error.response && error.response.data.details ? error.response.data.details : error.message
-        })
+        });
     }
-}
+};
 
-// get all orders
+// Get all orders
 export const getAllOrders = () => async (dispatch, getState) => {
     try {
-        dispatch({
-            type: GET_ALL_ORDERS_REQUEST
-        })
+        dispatch({ type: GET_ALL_ORDERS_REQUEST });
 
         const {
             userLoginReducer: { userInfo }
-        } = getState()
+        } = getState();
 
         const config = {
             headers: {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${userInfo.token}`
             }
-        }
+        };
 
-        // call api
-        const { data } = await axios.get(
-            `/account/all-orders-list/`,
-            config
-        )
+        const { data } = await axios.get(`${API_BASE}/account/all-orders-list/`, config);
 
-        dispatch({
-            type: GET_ALL_ORDERS_SUCCESS,
-            payload: data
-        })
-
+        dispatch({ type: GET_ALL_ORDERS_SUCCESS, payload: data });
     } catch (error) {
         dispatch({
             type: GET_ALL_ORDERS_FAIL,
             payload: error.response && error.response.data.details ? error.response.data.details : error.message
-        })
+        });
     }
-}
+};
