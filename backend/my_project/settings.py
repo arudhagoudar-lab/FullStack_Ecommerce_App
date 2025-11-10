@@ -9,6 +9,18 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
+import os
+import dj_database_url
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-temp-key")
+DEBUG = os.environ.get("DEBUG", "False") == "True"
+
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",") if os.environ.get("ALLOWED_HOSTS") else []
+
+
 
 import os
 from pathlib import Path
@@ -165,6 +177,16 @@ STRIPE_TEST_SECRET_KEY=os.environ.get('STRIPE_TEST_SECRET_KEY')
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# WhiteNoise for static file handling
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Add this line right after SecurityMiddleware
+    # ... rest of your middlewares ...
+]
+
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 MEDIA_URL = '/images/' # to load media files on admin page as well (changes in url.py file also, project level)
 
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static'),] # new
@@ -179,16 +201,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # cors origin
 CORS_ALLOW_ALL_ORIGINS = True
+INSTALLED_APPS += ["corsheaders"]
+MIDDLEWARE.insert(0, "corsheaders.middleware.CorsMiddleware")
 
+CORS_ALLOWED_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",")
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
+STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "")
 
-import os
-import dj_database_url
-from pathlib import Path
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-temp-key")
-DEBUG = os.environ.get("DEBUG", "False") == "True"
-
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",") if os.environ.get("ALLOWED_HOSTS") else []
 
