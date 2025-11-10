@@ -1,407 +1,108 @@
 import {
-    USER_LOGIN_REQUEST,
-    USER_LOGIN_SUCCESS,
-    USER_LOGIN_FAIL,
-    USER_LOGOUT,
-
+    CART_ADD_ITEM,
+    CART_REMOVE_ITEM,
+    CART_SAVE_SHIPPING_ADDRESS,
+    CART_SAVE_PAYMENT_METHOD,
+    CARD_CREATE_REQUEST,
+    CARD_CREATE_SUCCESS,
+    CARD_CREATE_FAIL,
     CARD_CREATE_RESET,
-
-    USER_REGISTER_REQUEST,
-    USER_REGISTER_SUCCESS,
-    USER_REGISTER_FAIL,
-
-    USER_DETAILS_REQUEST,
-    USER_DETAILS_SUCCESS,
-    USER_DETAILS_FAIL,
-
-    UPDATE_USER_DETAILS_REQUEST,
-    UPDATE_USER_DETAILS_SUCCESS,
-    UPDATE_USER_DETAILS_FAIL,
-
-    DELETE_USER_ACCOUNT_REQUEST,
-    DELETE_USER_ACCOUNT_SUCCESS,
-    DELETE_USER_ACCOUNT_FAIL,
-
-    GET_USER_ALL_ADDRESSES_REQUEST,
-    GET_USER_ALL_ADDRESSES_SUCCESS,
-    GET_USER_ALL_ADDRESSES_FAIL,
-
-    GET_SINGLE_ADDRESS_REQUEST,
-    GET_SINGLE_ADDRESS_SUCCESS,
-    GET_SINGLE_ADDRESS_FAIL,
-
-    CREATE_USER_ADDRESS_REQUEST,
-    CREATE_USER_ADDRESS_SUCCESS,
-    CREATE_USER_ADDRESS_FAIL,
-
-    UPDATE_USER_ADDRESS_REQUEST,
-    UPDATE_USER_ADDRESS_SUCCESS,
-    UPDATE_USER_ADDRESS_FAIL,
-
-    DELETE_USER_ADDRESS_REQUEST,
-    DELETE_USER_ADDRESS_SUCCESS,
-    DELETE_USER_ADDRESS_FAIL,
-
-    CHECK_TOKEN_VALID_REQUEST,
-    CHECK_TOKEN_VALID_SUCCESS,
-    CHECK_TOKEN_VALID_FAIL,
-
-    GET_ALL_ORDERS_REQUEST,
-    GET_ALL_ORDERS_SUCCESS,
-    GET_ALL_ORDERS_FAIL,
-
 } from '../constants/index'
 
 import axios from 'axios'
 
-// Base API URL — will use deployed backend when built on Render
+// ✅ Base API URL (auto-switches between local and Render)
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
-// Login
-export const login = (username, password) => async (dispatch) => {
+// 🛒 Add item to cart
+export const addToCart = (id, qty) => async (dispatch, getState) => {
     try {
-        dispatch({ type: USER_LOGIN_REQUEST });
-
-        const config = {
-            headers: {
-                'Content-type': 'application/json'
-            }
-        };
-
-        const { data } = await axios.post(
-            `${API_BASE}/account/login/`,
-            { username, password },
-            config
-        );
+        // Fetch product details
+        const { data } = await axios.get(`${API_BASE}/api/product/${id}/`);
 
         dispatch({
-            type: USER_LOGIN_SUCCESS,
-            payload: data
-        });
-
-        localStorage.setItem('userInfo', JSON.stringify(data));
-    } catch (error) {
-        dispatch({
-            type: USER_LOGIN_FAIL,
-            payload: error.response && error.response.data.detail ? error.response.data.detail : error.message
-        });
-    }
-};
-
-// Logout
-export const logout = () => (dispatch) => {
-    localStorage.removeItem('userInfo');
-    dispatch({ type: USER_LOGOUT });
-    dispatch({ type: CARD_CREATE_RESET });
-};
-
-// Register
-export const register = (username, email, password) => async (dispatch) => {
-    try {
-        dispatch({ type: USER_REGISTER_REQUEST });
-
-        const config = {
-            headers: {
-                'Content-type': 'application/json'
-            }
-        };
-
-        const { data } = await axios.post(
-            `${API_BASE}/account/register/`,
-            { username, email, password },
-            config
-        );
-
-        dispatch({ type: USER_REGISTER_SUCCESS, payload: data });
-        dispatch({ type: USER_LOGIN_SUCCESS, payload: data });
-
-        localStorage.setItem('userInfo', JSON.stringify(data));
-    } catch (error) {
-        dispatch({
-            type: USER_REGISTER_FAIL,
-            payload: error.response && error.response.data.detail ? error.response.data.detail : error.message
-        });
-    }
-};
-
-// Check token validation
-export const checkTokenValidation = () => async (dispatch, getState) => {
-    try {
-        dispatch({ type: CHECK_TOKEN_VALID_REQUEST });
-
-        const {
-            userLoginReducer: { userInfo }
-        } = getState();
-
-        const config = {
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${userInfo.token}`
-            }
-        };
-
-        const { data } = await axios.get(`${API_BASE}/payments/check-token/`, config);
-
-        dispatch({ type: CHECK_TOKEN_VALID_SUCCESS, payload: data });
-    } catch (error) {
-        dispatch({
-            type: CHECK_TOKEN_VALID_FAIL,
-            payload: error.response && error.response.data.details ? error.response.data.details : error.message
-        });
-    }
-};
-
-// User details
-export const userDetails = (id) => async (dispatch, getState) => {
-    try {
-        dispatch({ type: USER_DETAILS_REQUEST });
-
-        const {
-            userLoginReducer: { userInfo }
-        } = getState();
-
-        const config = {
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${userInfo.token}`
-            }
-        };
-
-        const { data } = await axios.get(`${API_BASE}/account/user/${id}`, config);
-
-        dispatch({ type: USER_DETAILS_SUCCESS, payload: data });
-    } catch (error) {
-        dispatch({
-            type: USER_DETAILS_FAIL,
-            payload: error.response && error.response.data.details ? error.response.data.details : error.message
-        });
-    }
-};
-
-// Update user details
-export const userUpdateDetails = (userData) => async (dispatch, getState) => {
-    try {
-        dispatch({ type: UPDATE_USER_DETAILS_REQUEST });
-
-        const {
-            userLoginReducer: { userInfo }
-        } = getState();
-
-        const config = {
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${userInfo.token}`
-            }
-        };
-
-        const { data } = await axios.put(
-            `${API_BASE}/account/user_update/${userInfo.id}/`,
-            {
-                username: userData.username,
-                email: userData.email,
-                password: userData.password
+            type: CART_ADD_ITEM,
+            payload: {
+                product: data.id,
+                name: data.name,
+                image: data.image,
+                price: data.price,
+                countInStock: data.countInStock,
+                qty,
             },
-            config
-        );
-
-        dispatch({ type: UPDATE_USER_DETAILS_SUCCESS, payload: data });
-    } catch (error) {
-        dispatch({
-            type: UPDATE_USER_DETAILS_FAIL,
-            payload: error.response && error.response.data.details ? error.response.data.details : error.message
         });
+
+        // Save to localStorage
+        localStorage.setItem('cartItems', JSON.stringify(getState().cart.cartItems));
+    } catch (error) {
+        console.error("Error adding to cart:", error.message);
     }
 };
 
-// Delete user account
-export const userAccountDelete = (userData) => async (dispatch, getState) => {
+// 🗑️ Remove item from cart
+export const removeFromCart = (id) => (dispatch, getState) => {
+    dispatch({
+        type: CART_REMOVE_ITEM,
+        payload: id,
+    });
+
+    localStorage.setItem('cartItems', JSON.stringify(getState().cart.cartItems));
+};
+
+// 📦 Save shipping address
+export const saveShippingAddress = (data) => (dispatch) => {
+    dispatch({
+        type: CART_SAVE_SHIPPING_ADDRESS,
+        payload: data,
+    });
+
+    localStorage.setItem('shippingAddress', JSON.stringify(data));
+};
+
+// 💳 Save payment method
+export const savePaymentMethod = (data) => (dispatch) => {
+    dispatch({
+        type: CART_SAVE_PAYMENT_METHOD,
+        payload: data,
+    });
+
+    localStorage.setItem('paymentMethod', JSON.stringify(data));
+};
+
+// 🧾 Create order (or checkout)
+export const createOrder = (orderData) => async (dispatch, getState) => {
     try {
-        dispatch({ type: DELETE_USER_ACCOUNT_REQUEST });
+        dispatch({ type: CARD_CREATE_REQUEST });
 
         const {
-            userLoginReducer: { userInfo }
+            userLoginReducer: { userInfo },
         } = getState();
 
         const config = {
             headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${userInfo.token}`
-            }
+                Authorization: `Bearer ${userInfo.token}`,
+            },
         };
 
-        const { data } = await axios.post(
-            `${API_BASE}/account/user_delete/${userData.id}/`,
-            { password: userData.password },
-            config
-        );
+        const { data } = await axios.post(`${API_BASE}/payments/create-order/`, orderData, config);
 
-        dispatch({ type: DELETE_USER_ACCOUNT_SUCCESS, payload: data });
-    } catch (error) {
         dispatch({
-            type: DELETE_USER_ACCOUNT_FAIL,
-            payload: error.response && error.response.data.details ? error.response.data.details : error.message
+            type: CARD_CREATE_SUCCESS,
+            payload: data,
         });
-    }
-};
 
-// Get all addresses
-export const getAllAddress = () => async (dispatch, getState) => {
-    try {
-        dispatch({ type: GET_USER_ALL_ADDRESSES_REQUEST });
+        // Clear cart after successful order creation
+        localStorage.removeItem('cartItems');
+        dispatch({ type: CARD_CREATE_RESET });
 
-        const {
-            userLoginReducer: { userInfo }
-        } = getState();
-
-        const config = {
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${userInfo.token}`
-            }
-        };
-
-        const { data } = await axios.get(`${API_BASE}/account/all-address-details/`, config);
-
-        dispatch({ type: GET_USER_ALL_ADDRESSES_SUCCESS, payload: data });
     } catch (error) {
         dispatch({
-            type: GET_USER_ALL_ADDRESSES_FAIL,
-            payload: error.response && error.response.data.details ? error.response.data.details : error.message
-        });
-    }
-};
-
-// Get single address
-export const getSingleAddress = (id) => async (dispatch, getState) => {
-    try {
-        dispatch({ type: GET_SINGLE_ADDRESS_REQUEST });
-
-        const {
-            userLoginReducer: { userInfo }
-        } = getState();
-
-        const config = {
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${userInfo.token}`
-            }
-        };
-
-        const { data } = await axios.get(`${API_BASE}/account/address-details/${id}/`, config);
-
-        dispatch({ type: GET_SINGLE_ADDRESS_SUCCESS, payload: data });
-    } catch (error) {
-        dispatch({
-            type: GET_SINGLE_ADDRESS_FAIL,
-            payload: error.response && error.response.data.details ? error.response.data.details : error.message
-        });
-    }
-};
-
-// Create user address
-export const createUserAddress = (addressData) => async (dispatch, getState) => {
-    try {
-        dispatch({ type: CREATE_USER_ADDRESS_REQUEST });
-
-        const {
-            userLoginReducer: { userInfo }
-        } = getState();
-
-        const config = {
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${userInfo.token}`
-            }
-        };
-
-        const { data } = await axios.post(`${API_BASE}/account/create-address/`, addressData, config);
-
-        dispatch({ type: CREATE_USER_ADDRESS_SUCCESS, payload: data });
-    } catch (error) {
-        dispatch({
-            type: CREATE_USER_ADDRESS_FAIL,
-            payload: error.response && error.response.data.details ? error.response.data.details : error.message
-        });
-    }
-};
-
-// Update user address
-export const updateUserAddress = (id, addressData) => async (dispatch, getState) => {
-    try {
-        dispatch({ type: UPDATE_USER_ADDRESS_REQUEST });
-
-        const {
-            userLoginReducer: { userInfo }
-        } = getState();
-
-        const config = {
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${userInfo.token}`
-            }
-        };
-
-        const { data } = await axios.put(`${API_BASE}/account/update-address/${id}/`, addressData, config);
-
-        dispatch({ type: UPDATE_USER_ADDRESS_SUCCESS, payload: data });
-    } catch (error) {
-        dispatch({
-            type: UPDATE_USER_ADDRESS_FAIL,
-            payload: error.response && error.response.data.details ? error.response.data.details : error.message
-        });
-    }
-};
-
-// Delete user address
-export const deleteUserAddress = (id) => async (dispatch, getState) => {
-    try {
-        dispatch({ type: DELETE_USER_ADDRESS_REQUEST });
-
-        const {
-            userLoginReducer: { userInfo }
-        } = getState();
-
-        const config = {
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${userInfo.token}`
-            }
-        };
-
-        const { data } = await axios.delete(`${API_BASE}/account/delete-address/${id}/`, config);
-
-        dispatch({ type: DELETE_USER_ADDRESS_SUCCESS, payload: data });
-    } catch (error) {
-        dispatch({
-            type: DELETE_USER_ADDRESS_FAIL,
-            payload: error.response && error.response.data.details ? error.response.data.details : error.message
-        });
-    }
-};
-
-// Get all orders
-export const getAllOrders = () => async (dispatch, getState) => {
-    try {
-        dispatch({ type: GET_ALL_ORDERS_REQUEST });
-
-        const {
-            userLoginReducer: { userInfo }
-        } = getState();
-
-        const config = {
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${userInfo.token}`
-            }
-        };
-
-        const { data } = await axios.get(`${API_BASE}/account/all-orders-list/`, config);
-
-        dispatch({ type: GET_ALL_ORDERS_SUCCESS, payload: data });
-    } catch (error) {
-        dispatch({
-            type: GET_ALL_ORDERS_FAIL,
-            payload: error.response && error.response.data.details ? error.response.data.details : error.message
+            type: CARD_CREATE_FAIL,
+            payload:
+                error.response && error.response.data.detail
+                    ? error.response.data.detail
+                    : error.message,
         });
     }
 };
